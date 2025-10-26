@@ -2,6 +2,12 @@ import express from 'express'
 import cors from 'cors'
 import bodyParser from 'body-parser'
 import { DocumentManager } from '@y-sweet/sdk'
+import { readFile } from 'fs/promises'
+import { fileURLToPath } from 'url'
+import { dirname, join } from 'path'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
 const app = express()
 app.use(cors())
@@ -29,7 +35,23 @@ app.post('/api/auth', async (req, res) => {
   }
 })
 
+/**
+ * 提供前端测试页面
+ */
+app.get('/test', async (req, res) => {
+  try {
+    const htmlPath = join(__dirname, 'frontend-test.html')
+    const htmlContent = await readFile(htmlPath, 'utf8')
+    res.setHeader('Content-Type', 'text/html; charset=utf-8')
+    res.send(htmlContent)
+  } catch (err) {
+    console.error('Failed to load frontend-test.html:', err)
+    res.status(500).send('无法加载测试页面')
+  }
+})
+
 const port = Number(process.env.PORT || 3000)
 app.listen(port, () => {
   console.log(`[auth] running on :${port}, using CONNECTION_STRING=${conn}`)
+  console.log(`[auth] frontend test page available at: http://localhost:${port}/test`)
 })
