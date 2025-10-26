@@ -63,6 +63,7 @@ services:
     working_dir: /srv
     volumes:
       - ./auth:/srv
+      - ./frontend-test.html:/srv/frontend-test.html:ro
     environment:
       # 从 ysweet 容器日志或下方静态拼接获取连接串；默认直连 127.0.0.1:8080
       CONNECTION_STRING: ${CONNECTION_STRING:-ys://ysweet:8080}

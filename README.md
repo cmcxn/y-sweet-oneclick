@@ -18,7 +18,7 @@ docker compose up -d
 - MinIO 控制台: http://localhost:9001  （用户名/密码见 `.env`）
 - Y‑Sweet 服务: `ys://localhost:8080`  （容器发布到 8080）
 - Auth 后端: http://localhost:3000
-- **YJS 测试页面**: 直接在浏览器中打开 `frontend-test.html` 文件
+- **YJS 测试页面**: http://localhost:3000/test
 
 ### 客户端连接（示例）
 前端调用你的后端 `/api/auth` 获取 Token：
@@ -46,7 +46,7 @@ createYjsProvider(doc, docId, 'http://localhost:3000/api/auth')
 
 ### 使用方法
 1. 确保 Y-Sweet 服务已启动：`docker compose up -d`
-2. 在浏览器中直接打开 `frontend-test.html` 文件
+2. 在浏览器中访问 http://localhost:3000/test
 3. 等待连接到 Y-Sweet 服务器
 4. 使用各个测试区域验证不同的数据类型操作
 5. 打开多个浏览器标签页测试实时协作功能
