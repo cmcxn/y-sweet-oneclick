@@ -19,7 +19,7 @@ const server = http.createServer((req, res) => {
     res.writeHead(200, {'Content-Type': 'application/json'});
     res.end(JSON.stringify({
       docId: parsedUrl.query.z || 'mock-doc-' + Date.now(),
-      url: 'ws://localhost:8080/doc/mock',
+      url: 'ws://ysweet:8080/doc/mock',
       token: 'mock-token-' + Date.now()
     }));
   } else if (parsedUrl.pathname.startsWith('/doc/')) {

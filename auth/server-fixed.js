@@ -73,7 +73,7 @@ app.post('/api/auth', async (req, res) => {
       timestamp: new Date().toISOString()
     }
     
-    console.log(`[AUTH] Issued token for ${docId}:`, response)
+    console.log(`[AUTH] Issued token for document ID (length: ${docId.length}):`, response)
     res.json(response)
   } catch (err) {
     console.error('[AUTH] Error:', err)
@@ -92,7 +92,7 @@ app.get('/test', async (req, res) => {
     res.send(htmlContent)
   } catch (err) {
     console.error('Failed to load frontend-test.html:', err)
-    res.status(500).send('无法加载测试页面')
+    res.status(500).send('Unable to load test page')
   }
 })
 
