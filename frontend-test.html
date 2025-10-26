@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Y-Sweet YJS 基本数据类型测试页面</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        
+        .status {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        
+        .status.connected {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.connecting {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .test-section {
+            background: white;
+            margin-bottom: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .test-section h3 {
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            background-color: #667eea;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #5a6fd8;
+        }
+        
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        
+        input, textarea {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .output {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .log {
+            background-color: #f1f3f4;
+            border-left: 4px solid #4285f4;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .error-log {
+            border-left-color: #ea4335;
+            background-color: #fdf2f2;
+        }
+        
+        .collaboration-area {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .collaboration-area {
+                grid-template-columns: 1fr;
+            }
+            .controls {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔄 Y-Sweet YJS 基本数据类型测试页面</h1>
+        <p>测试和验证 Yjs 的基本数据类型操作和实时协作功能</p>
+    </div>
+
+    <div id="connection-status" class="status connecting">
+        正在连接到 Y-Sweet 服务器...
+    </div>
+
+    <!-- Y.Map 测试 -->
+    <div class="test-section">
+        <h3>📋 Y.Map 测试</h3>
+        <p>测试键值对数据结构的基本操作</p>
+        <div class="controls">
+            <input type="text" id="map-key" placeholder="键名" value="testKey">
+            <input type="text" id="map-value" placeholder="值" value="testValue">
+            <button onclick="setMapValue()">设置</button>
+            <button onclick="getMapValue()">获取</button>
+            <button onclick="deleteMapValue()">删除</button>
+            <button onclick="clearMap()">清空</button>
+        </div>
+        <div id="map-output" class="output">等待操作...</div>
+    </div>
+
+    <!-- Y.Array 测试 -->
+    <div class="test-section">
+        <h3>📊 Y.Array 测试</h3>
+        <p>测试数组数据结构的基本操作</p>
+        <div class="controls">
+            <input type="text" id="array-value" placeholder="要添加的值" value="item">
+            <input type="number" id="array-index" placeholder="索引" value="0" min="0">
+            <button onclick="pushToArray()">添加到末尾</button>
+            <button onclick="insertToArray()">插入到指定位置</button>
+            <button onclick="deleteFromArray()">删除指定索引</button>
+            <button onclick="clearArray()">清空数组</button>
+        </div>
+        <div id="array-output" class="output">等待操作...</div>
+    </div>
+
+    <!-- Y.Text 测试 -->
+    <div class="test-section">
+        <h3>📝 Y.Text 测试</h3>
+        <p>测试文本数据结构的基本操作</p>
+        <div class="controls">
+            <input type="text" id="text-content" placeholder="要插入的文本" value="Hello World">
+            <input type="number" id="text-index" placeholder="插入位置" value="0" min="0">
+            <input type="number" id="text-length" placeholder="删除长度" value="1" min="0">
+            <button onclick="insertText()">插入文本</button>
+            <button onclick="deleteText()">删除文本</button>
+            <button onclick="clearText()">清空文本</button>
+        </div>
+        <div id="text-output" class="output">等待操作...</div>
+    </div>
+
+    <!-- Y.XmlElement 测试 -->
+    <div class="test-section">
+        <h3>🏷️ Y.XmlElement 测试</h3>
+        <p>测试XML元素数据结构的基本操作</p>
+        <div class="controls">
+            <input type="text" id="xml-tag" placeholder="标签名" value="div">
+            <input type="text" id="xml-attr-key" placeholder="属性名" value="class">
+            <input type="text" id="xml-attr-value" placeholder="属性值" value="test">
+            <button onclick="createXmlElement()">创建元素</button>
+            <button onclick="setXmlAttribute()">设置属性</button>
+            <button onclick="clearXml()">清空XML</button>
+        </div>
+        <div id="xml-output" class="output">等待操作...</div>
+    </div>
+
+    <!-- 实时协作测试 -->
+    <div class="test-section">
+        <h3>🤝 实时协作测试</h3>
+        <p>打开多个浏览器标签页或在不同设备上打开此页面，可以看到实时同步效果</p>
+        <div class="collaboration-area">
+            <div>
+                <h4>协作文本编辑</h4>
+                <textarea id="collab-text" placeholder="在这里输入文本，其他用户可以实时看到变化..." 
+                          style="width: 100%; height: 100px; resize: vertical;"></textarea>
+            </div>
+            <div>
+                <h4>协作数据显示</h4>
+                <div id="collab-output" class="output" style="height: 100px;">
+                    等待协作数据...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 操作日志 -->
+    <div class="test-section">
+        <h3>📜 操作日志</h3>
+        <button onclick="clearLogs()">清空日志</button>
+        <div id="logs" style="max-height: 300px; overflow-y: auto;"></div>
+    </div>
+
+    <script type="module">
+        import * as Y from 'https://cdn.skypack.dev/yjs';
+        import { createYjsProvider } from 'https://cdn.skypack.dev/@y-sweet/client';
+
+        // 全局变量
+        let doc, provider;
+        let yMap, yArray, yText, yXml, yCollabText;
+        let isConnected = false;
+
+        // 初始化
+        async function initYjs() {
+            try {
+                logMessage('正在初始化 Yjs 文档...', 'info');
+                
+                doc = new Y.Doc();
+                // Generate more robust document ID to avoid collisions
+                const docId = 'yjs-test-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                
+                logMessage(`创建文档 ID: ${docId}`, 'info');
+                
+                // 创建 Y.js 数据类型
+                yMap = doc.getMap('testMap');
+                yArray = doc.getArray('testArray');
+                yText = doc.getText('testText');
+                yXml = doc.getXmlElement('testXml');
+                yCollabText = doc.getText('collabText');
+                
+                // 设置监听器
+                setupListeners();
+                
+                logMessage('正在连接到 Y-Sweet 服务器...', 'info');
+                
+                // 创建提供者
+                provider = createYjsProvider(doc, docId, 'http://localhost:3000/api/auth');
+                
+                // 监听连接状态
+                provider.on('status', (event) => {
+                    handleConnectionStatus(event.status);
+                });
+                
+                // 设置协作文本编辑器
+                setupCollaborativeEditor();
+                
+                logMessage('Y-Sweet 客户端初始化完成', 'info');
+                
+            } catch (error) {
+                logMessage(`初始化失败: ${error.message}`, 'error');
+                updateConnectionStatus('error', `连接失败: ${error.message}`);
+            }
+        }
+
+        function setupListeners() {
+            // Y.Map 监听器
+            yMap.observe(() => {
+                updateMapDisplay();
+                logMessage('Y.Map 发生变化', 'info');
+            });
+
+            // Y.Array 监听器
+            yArray.observe(() => {
+                updateArrayDisplay();
+                logMessage('Y.Array 发生变化', 'info');
+            });
+
+            // Y.Text 监听器
+            yText.observe(() => {
+                updateTextDisplay();
+                logMessage('Y.Text 发生变化', 'info');
+            });
+
+            // Y.XmlElement 监听器
+            yXml.observe(() => {
+                updateXmlDisplay();
+                logMessage('Y.XmlElement 发生变化', 'info');
+            });
+
+            // 协作文本监听器
+            yCollabText.observe(() => {
+                updateCollabDisplay();
+            });
+        }
+
+        function setupCollaborativeEditor() {
+            const textarea = document.getElementById('collab-text');
+            let isUpdating = false;
+            let inputDebounceTimer = null;
+
+            // From Y.Text to textarea
+            yCollabText.observe(() => {
+                if (!isUpdating) {
+                    isUpdating = true;
+                    textarea.value = yCollabText.toString();
+                    isUpdating = false;
+                }
+            });
+
+            // From textarea to Y.Text with debouncing
+            textarea.addEventListener('input', () => {
+                if (!isUpdating) {
+                    // Clear existing timer
+                    if (inputDebounceTimer) {
+                        clearTimeout(inputDebounceTimer);
+                    }
+                    
+                    // Set new timer for debounced update
+                    inputDebounceTimer = setTimeout(() => {
+                        isUpdating = true;
+                        const text = textarea.value;
+                        const yText = yCollabText.toString();
+                        
+                        if (text !== yText) {
+                            yCollabText.delete(0, yCollabText.length);
+                            yCollabText.insert(0, text);
+                        }
+                        isUpdating = false;
+                    }, 300); // 300ms debounce
+                }
+            });
+        }
+
+        function handleConnectionStatus(status) {
+            switch (status) {
+                case 'connected':
+                    isConnected = true;
+                    updateConnectionStatus('connected', '✅ 已连接到 Y-Sweet 服务器');
+                    logMessage('成功连接到 Y-Sweet 服务器', 'info');
+                    break;
+                case 'connecting':
+                    updateConnectionStatus('connecting', '🔄 正在连接...');
+                    break;
+                case 'disconnected':
+                    isConnected = false;
+                    updateConnectionStatus('error', '❌ 连接断开');
+                    logMessage('与服务器连接断开', 'error');
+                    break;
+            }
+        }
+
+        function updateConnectionStatus(type, message) {
+            const statusEl = document.getElementById('connection-status');
+            statusEl.className = `status ${type}`;
+            statusEl.textContent = message;
+        }
+
+        function logMessage(message, type = 'info') {
+            const logsEl = document.getElementById('logs');
+            const logEl = document.createElement('div');
+            logEl.className = `log ${type === 'error' ? 'error-log' : ''}`;
+            logEl.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logsEl.appendChild(logEl);
+            logsEl.scrollTop = logsEl.scrollHeight;
+        }
+
+        // Y.Map 操作函数
+        window.setMapValue = function() {
+            const key = document.getElementById('map-key').value;
+            const value = document.getElementById('map-value').value;
+            if (key && value) {
+                yMap.set(key, value);
+                logMessage(`设置 Map[${key}] = ${value}`, 'info');
+            }
+        };
+
+        window.getMapValue = function() {
+            const key = document.getElementById('map-key').value;
+            if (key) {
+                const value = yMap.get(key);
+                logMessage(`获取 Map[${key}] = ${value || 'undefined'}`, 'info');
+            }
+        };
+
+        window.deleteMapValue = function() {
+            const key = document.getElementById('map-key').value;
+            if (key) {
+                yMap.delete(key);
+                logMessage(`删除 Map[${key}]`, 'info');
+            }
+        };
+
+        window.clearMap = function() {
+            yMap.clear();
+            logMessage('清空 Map', 'info');
+        };
+
+        function updateMapDisplay() {
+            const output = document.getElementById('map-output');
+            const mapData = {};
+            yMap.forEach((value, key) => {
+                mapData[key] = value;
+            });
+            output.textContent = JSON.stringify(mapData, null, 2);
+        }
+
+        // Y.Array 操作函数
+        window.pushToArray = function() {
+            const value = document.getElementById('array-value').value;
+            if (value) {
+                yArray.push([value]);
+                logMessage(`添加到数组: ${value}`, 'info');
+            }
+        };
+
+        window.insertToArray = function() {
+            const value = document.getElementById('array-value').value;
+            const index = parseInt(document.getElementById('array-index').value) || 0;
+            if (value) {
+                yArray.insert(Math.min(index, yArray.length), [value]);
+                logMessage(`在索引 ${index} 处插入: ${value}`, 'info');
+            }
+        };
+
+        window.deleteFromArray = function() {
+            const index = parseInt(document.getElementById('array-index').value) || 0;
+            if (index < yArray.length) {
+                yArray.delete(index, 1);
+                logMessage(`删除索引 ${index} 处的元素`, 'info');
+            }
+        };
+
+        window.clearArray = function() {
+            yArray.delete(0, yArray.length);
+            logMessage('清空数组', 'info');
+        };
+
+        function updateArrayDisplay() {
+            const output = document.getElementById('array-output');
+            output.textContent = JSON.stringify(yArray.toArray(), null, 2);
+        }
+
+        // Y.Text 操作函数
+        window.insertText = function() {
+            const content = document.getElementById('text-content').value;
+            const index = parseInt(document.getElementById('text-index').value) || 0;
+            if (content) {
+                yText.insert(Math.min(index, yText.length), content);
+                logMessage(`在位置 ${index} 插入文本: ${content}`, 'info');
+            }
+        };
+
+        window.deleteText = function() {
+            const index = parseInt(document.getElementById('text-index').value) || 0;
+            const length = parseInt(document.getElementById('text-length').value) || 1;
+            if (index < yText.length) {
+                yText.delete(index, Math.min(length, yText.length - index));
+                logMessage(`从位置 ${index} 删除 ${length} 个字符`, 'info');
+            }
+        };
+
+        window.clearText = function() {
+            yText.delete(0, yText.length);
+            logMessage('清空文本', 'info');
+        };
+
+        function updateTextDisplay() {
+            const output = document.getElementById('text-output');
+            output.textContent = `文本内容: "${yText.toString()}"`;
+        }
+
+        // Y.XmlElement 操作函数
+        window.createXmlElement = function() {
+            const tag = document.getElementById('xml-tag').value || 'div';
+            yXml.delete(0, yXml.length); // 清空现有内容
+            const newElement = new Y.XmlElement(tag);
+            yXml.insert(0, [newElement]);
+            logMessage(`创建 XML 元素: <${tag}>`, 'info');
+        };
+
+        window.setXmlAttribute = function() {
+            const key = document.getElementById('xml-attr-key').value;
+            const value = document.getElementById('xml-attr-value').value;
+            if (yXml.length > 0 && key && value) {
+                const element = yXml.get(0);
+                if (element instanceof Y.XmlElement) {
+                    element.setAttribute(key, value);
+                    logMessage(`设置 XML 属性: ${key}="${value}"`, 'info');
+                }
+            }
+        };
+
+        window.clearXml = function() {
+            yXml.delete(0, yXml.length);
+            logMessage('清空 XML', 'info');
+        };
+
+        function updateXmlDisplay() {
+            const output = document.getElementById('xml-output');
+            try {
+                if (yXml.length > 0) {
+                    const element = yXml.get(0);
+                    if (element instanceof Y.XmlElement) {
+                        output.textContent = `XML: <${element.nodeName}${getAttributesString(element)}>`;
+                    } else {
+                        output.textContent = 'XML: (非元素类型)';
+                    }
+                } else {
+                    output.textContent = 'XML: (空)';
+                }
+            } catch (error) {
+                output.textContent = `XML 显示错误: ${error.message}`;
+            }
+        }
+
+        function getAttributesString(element) {
+            const attrs = [];
+            element.getAttributes().forEach((value, key) => {
+                attrs.push(`${key}="${value}"`);
+            });
+            return attrs.length > 0 ? ' ' + attrs.join(' ') : '';
+        }
+
+        function updateCollabDisplay() {
+            const output = document.getElementById('collab-output');
+            output.textContent = `协作文本: "${yCollabText.toString()}"`;
+        }
+
+        window.clearLogs = function() {
+            document.getElementById('logs').innerHTML = '';
+        };
+
+        // 页面加载时初始化
+        initYjs();
+    </script>
+</body>
+</html>

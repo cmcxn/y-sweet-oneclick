@@ -1,8 +1,6 @@
-version: "3.8"
-
 services:
   minio:
-    image: minio/minio:RELEASE.2024-09-22T00-33-43Z
+    image: minio/minio:latest
     container_name: minio
     command: server /data --console-address ":9001"
     environment:
@@ -16,7 +14,7 @@ services:
     networks: [ys-net]
 
   minio-init:
-    image: minio/mc:RELEASE.2024-09-22T00-33-43Z
+    image: minio/mc:latest
     container_name: minio-init
     depends_on:
       - minio
@@ -69,7 +67,7 @@ services:
       # 从 ysweet 容器日志或下方静态拼接获取连接串；默认直连 127.0.0.1:8080
       CONNECTION_STRING: ${CONNECTION_STRING:-ys://ysweet:8080}
       PORT: ${AUTH_PORT:-3000}
-    command: ["/bin/sh","-lc","npm ci && node server.js"]
+    command: ["/bin/sh","-lc","npm install && node server.js"]
     depends_on:
       - ysweet
     ports:
