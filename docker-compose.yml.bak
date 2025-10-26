@@ -1,0 +1,163 @@
+services:
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - minio-data:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    networks: [ys-net]
+
+  minio-init:
+    image: minio/mc:latest
+    container_name: minio-init
+    depends_on:
+      - minio
+    entrypoint: ["/bin/sh","-c"]
+    command: >
+      "
+      set -e;
+      until (/usr/bin/mc alias set local http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD}); do
+        echo '...waiting for minio...'; sleep 2;
+      done;
+      /usr/bin/mc ls local || true;
+      /usr/bin/mc mb -p local/${S3_BUCKET} || true;
+      /usr/bin/mc anonymous set none local/${S3_BUCKET} || true;
+      echo 'MinIO init done';
+      "
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      S3_BUCKET: ${S3_BUCKET}
+    networks: [ys-net]
+
+  ysweet:
+    image: node:20-alpine
+    container_name: ysweet
+    restart: unless-stopped
+    depends_on:
+      - minio
+      - minio-init
+    working_dir: /app
+    entrypoint: ["/bin/sh","-lc"]
+    # 使用 npx 启动 y-sweet，并把数据持久化到 MinIO (S3 兼容存储)
+  ysweet:
+    image: node:20-alpine
+    container_name: ysweet
+    restart: unless-stopped
+    depends_on:
+      - minio
+      - minio-init
+    working_dir: /app
+    entrypoint: ["/bin/sh","-lc"]
+    # Simple Y-Sweet mock server when network is restricted
+    command: >
+      "
+      echo 'Starting Y-Sweet mock server for network-restricted environment...';
+      node -e '
+      const http = require(\"http\");
+      const url = require(\"url\");
+      
+      const server = http.createServer((req, res) => {
+        res.setHeader(\"Access-Control-Allow-Origin\", \"*\");
+        res.setHeader(\"Access-Control-Allow-Methods\", \"GET, POST, PUT, DELETE, OPTIONS\");
+        res.setHeader(\"Access-Control-Allow-Headers\", \"Content-Type, Authorization\");
+        
+        if (req.method === \"OPTIONS\") {
+          res.writeHead(204);
+          res.end();
+          return;
+        }
+        
+        const parsedUrl = url.parse(req.url, true);
+        console.log(`${new Date().toISOString()} ${req.method} ${req.url}`);
+        
+        if (parsedUrl.pathname === \"/doc/new\") {
+          res.writeHead(200, {\"Content-Type\": \"application/json\"});
+          res.end(JSON.stringify({
+            docId: parsedUrl.query.z || \"mock-doc-\" + Date.now(),
+            url: \"ws://localhost:8080/doc/mock\",
+            token: \"mock-token-\" + Date.now()
+          }));
+        } else if (parsedUrl.pathname.startsWith(\"/doc/\")) {
+          res.writeHead(200, {\"Content-Type\": \"application/json\"});
+          res.end(JSON.stringify({status: \"ok\", message: \"Mock Y-Sweet endpoint\"}));
+        } else {
+          res.writeHead(200, {\"Content-Type\": \"application/json\"});
+          res.end(JSON.stringify({
+            message: \"Mock Y-Sweet server - network restricted environment\", 
+            url: req.url,
+            status: \"running\"
+          }));
+        }
+      });
+      
+      server.listen(8080, \"0.0.0.0\", () => {
+        console.log(\"Mock Y-Sweet server listening on port 8080\");
+        console.log(\"Available endpoints:\");
+        console.log(\"  GET  / - Health check\");
+        console.log(\"  POST /doc/new - Create new document\");
+        console.log(\"  *    /doc/* - Document operations\");
+      });
+      '
+      "
+    environment:
+      # S3 兼容存储凭据（MinIO）
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
+      AWS_REGION: ${AWS_REGION}
+      AWS_ENDPOINT_URL: http://minio:9000
+    ports:
+      - "8080:8080"
+    networks: [ys-net]
+
+  auth:
+    image: node:20-alpine
+    container_name: ysweet-auth
+    restart: unless-stopped
+    working_dir: /srv
+    volumes:
+      - ./auth:/srv
+      - ./frontend-test.html:/srv/frontend-test.html:ro
+    environment:
+      # 从 ysweet 容器日志或下方静态拼接获取连接串；默认直连 127.0.0.1:8080
+      CONNECTION_STRING: ${CONNECTION_STRING:-ys://ysweet:8080}
+      PORT: ${AUTH_PORT:-3000}
+    command:
+      - /bin/sh
+      - -lc
+      - |
+        echo 'Starting auth service...'
+        echo 'Checking existing node_modules...'
+        if [ -d "/srv/node_modules" ]; then
+          echo 'Using existing node_modules'
+        else
+          echo 'No node_modules found, this may cause issues'
+        fi
+        echo 'Waiting for Y-Sweet service to be ready...'
+        for i in $(seq 1 15); do
+          if nc -z ysweet 8080 2>/dev/null; then
+            echo 'Y-Sweet server port is open!'
+            break
+          fi
+          echo "Waiting for Y-Sweet server... (attempt $i/15)"
+          sleep 2
+        done
+        echo 'Starting auth server...'
+        node server.js
+    depends_on:
+      - ysweet
+    ports:
+      - "${AUTH_PORT:-3000}:3000"
+    networks: [ys-net]
+
+networks:
+  ys-net:
+
+volumes:
+  minio-data:
