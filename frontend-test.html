@@ -251,7 +251,8 @@
                 logMessage('正在初始化 Yjs 文档...', 'info');
                 
                 doc = new Y.Doc();
-                const docId = 'yjs-test-' + Date.now();
+                // Generate more robust document ID to avoid collisions
+                const docId = 'yjs-test-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
                 
                 logMessage(`创建文档 ID: ${docId}`, 'info');
                 
@@ -320,8 +321,9 @@
         function setupCollaborativeEditor() {
             const textarea = document.getElementById('collab-text');
             let isUpdating = false;
+            let inputDebounceTimer = null;
 
-            // 从 Y.Text 更新 textarea
+            // From Y.Text to textarea
             yCollabText.observe(() => {
                 if (!isUpdating) {
                     isUpdating = true;
@@ -330,18 +332,26 @@
                 }
             });
 
-            // 从 textarea 更新 Y.Text
+            // From textarea to Y.Text with debouncing
             textarea.addEventListener('input', () => {
                 if (!isUpdating) {
-                    isUpdating = true;
-                    const text = textarea.value;
-                    const yText = yCollabText.toString();
-                    
-                    if (text !== yText) {
-                        yCollabText.delete(0, yCollabText.length);
-                        yCollabText.insert(0, text);
+                    // Clear existing timer
+                    if (inputDebounceTimer) {
+                        clearTimeout(inputDebounceTimer);
                     }
-                    isUpdating = false;
+                    
+                    // Set new timer for debounced update
+                    inputDebounceTimer = setTimeout(() => {
+                        isUpdating = true;
+                        const text = textarea.value;
+                        const yText = yCollabText.toString();
+                        
+                        if (text !== yText) {
+                            yCollabText.delete(0, yCollabText.length);
+                            yCollabText.insert(0, text);
+                        }
+                        isUpdating = false;
+                    }, 300); // 300ms debounce
                 }
             });
         }
