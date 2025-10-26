@@ -46,7 +46,8 @@ services:
     entrypoint: ["/bin/sh","-lc"]
     # 使用 npx 启动 y-sweet，并把数据持久化到 MinIO (S3 兼容存储)
     command: >
-      "npx y-sweet@latest serve s3://${S3_BUCKET}/${S3_PREFIX:-y-docs}"
+      "npm config set registry https://registry.npmmirror.com &&
+       npx y-sweet@latest serve s3://${S3_BUCKET}/${S3_PREFIX:-y-docs}"
     environment:
       # S3 兼容存储凭据（MinIO）
       AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
@@ -68,6 +69,7 @@ services:
       # 从 ysweet 容器日志或下方静态拼接获取连接串；默认直连 127.0.0.1:8080
       CONNECTION_STRING: ${CONNECTION_STRING:-ys://ysweet:8080}
       PORT: ${AUTH_PORT:-3000}
+      NPM_CONFIG_REGISTRY: https://registry.npmmirror.com
     command: ["/bin/sh","-lc","npm install && node server.js"]
     depends_on:
       - ysweet

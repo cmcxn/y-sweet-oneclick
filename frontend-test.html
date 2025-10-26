@@ -269,7 +269,7 @@
                 logMessage('正在连接到 Y-Sweet 服务器...', 'info');
                 
                 // 创建提供者
-                provider = createYjsProvider(doc, docId, 'http://localhost:3000/api/auth');
+                provider = createYjsProvider(doc, docId, '/api/auth');
                 
                 // 监听连接状态
                 provider.on('status', (event) => {
